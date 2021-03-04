@@ -2,6 +2,7 @@ import {createRouter, createWebHistory, RouteRecordRaw} from 'vue-router'
 import home from '../views/home.vue'
 import about from '../views/about.vue'
 import note from '../views/admin/note.vue'
+import category from "@/views/admin/category.vue";
 
 const routes = [
   {
@@ -13,6 +14,11 @@ const routes = [
     path: '/note',
     name: 'Note',
     component: note
+  },
+  {
+    path: '/category',
+    name: 'Category',
+    component: category
   },
   {
     path: '/about',

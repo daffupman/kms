@@ -17,7 +17,7 @@
           </a-button>
         </a-form-item>
       </a-form>
-      <a-table :columns="columns" :row-key="record => record.id" :data-source="notes" :pagination="pagination" :loading="loading" @change="handleTableChange">
+      <a-table :columns="columns" :row-key="record => record.id" :data-source="categories" :pagination="pagination" :loading="loading" @change="handleTableChange">
         <template #cover="{ text: cover }">
           <img v-if="cover" :src="cover" alt="avatar" />
         </template>
@@ -37,22 +37,13 @@
     </a-layout-content>
   </a-layout>
 
-  <a-modal title="编辑笔记基本信息" v-model:visible="modalVisible" :confirm-loading="modalLoading" @ok="handleModalOk">
-    <a-form :model="notes" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
-      <a-form-item label="封面">
-        <a-input v-model:value="notes.cover" />
-      </a-form-item>
+  <a-modal title="编辑分类基本信息" v-model:visible="modalVisible" :confirm-loading="modalLoading" @ok="handleModalOk">
+    <a-form :model="categories" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
       <a-form-item label="名称">
-        <a-input v-model:value="notes.name" />
+        <a-input v-model:value="categories.cateName" />
       </a-form-item>
-      <a-form-item label="分类一">
-        <a-input v-model:value="notes.category1Id" />
-      </a-form-item>
-      <a-form-item label="分类一">
-        <a-input v-model:value="notes.category2Id" />
-      </a-form-item>
-      <a-form-item label="描述">
-        <a-input v-model:value="notes.description" type="textarea"/>
+      <a-form-item label="父分类id">
+        <a-input v-model:value="categories.parentId" />
       </a-form-item>
     </a-form>
   </a-modal>
@@ -65,13 +56,13 @@ import {Tool} from '@/util/tool';
 import {message} from 'ant-design-vue';
 
 export default defineComponent({
-  name: 'note',
+  name: 'category',
   setup() {
     const param: any = ref();
     param.value = {};
 
-    const notes = ref();
-    const note = ref();
+    const categories = ref();
+    const category = ref();
     const pagination = ref({
       current: 1,
       pageSize: 4,
@@ -81,33 +72,12 @@ export default defineComponent({
 
     const columns = [
       {
-        title: '封面',
-        dataIndex: 'cover',
-        slots: { customRender: 'cover' }
-      },
-      {
         title: '名称',
-        dataIndex: 'name'
+        dataIndex: 'cateName'
       },
       {
-        title: '分类一',
-        dataIndex: 'category1Id'
-      },
-      {
-        title: '分类二',
-        dataIndex: 'category2Id'
-      },
-      {
-        title: '文档数',
-        dataIndex: 'docCount'
-      },
-      {
-        title: '阅读数',
-        dataIndex: 'viewCount'
-      },
-      {
-        title: '点赞数',
-        dataIndex: 'voteCount'
+        title: '父类id',
+        dataIndex: 'parentId'
       },
       {
         title: 'Action',
@@ -121,9 +91,9 @@ export default defineComponent({
      **/
     const handleQuery = (params: any) => {
       loading.value = true;
-      axios.get("http://localhost:10020/notes/note", {
+      axios.get("http://localhost:10020/notes/category", {
         params: {
-          noteName: param.value.name,
+          cateName: param.value.name,
           pageNum: params.page,
           pageSize: params.size
         }
@@ -131,7 +101,7 @@ export default defineComponent({
         loading.value = false;
         const response = resp.data;
         if (response.ok) {
-          notes.value = response.data.list;
+          categories.value = response.data.list;
           // 重置分页按钮
           pagination.value.current = params.page;
           pagination.value.total = response.data.total;
@@ -160,7 +130,7 @@ export default defineComponent({
     const handleModalOk = () => {
       modalLoading.value = true;
 
-      axios.put("http://localhost:10020/notes/note", notes.value).then((resp) => {
+      axios.put("http://localhost:10020/notes/category", categories.value).then((resp) => {
         const response: any = resp.data;
         if (response.ok) {
           modalVisible.value = false;
@@ -180,7 +150,7 @@ export default defineComponent({
     const edit = (record: any) => {
       modalVisible.value = true;
       // 需要使用复制功能，否则在编辑的时候，会立马修改页面上的值，尽管还没有提交修改
-      notes.value = Tool.copy(record);
+      categories.value = Tool.copy(record);
     };
 
     /**
@@ -188,14 +158,14 @@ export default defineComponent({
      */
     const add = () => {
       modalVisible.value = true;
-      notes.value = {};
+      categories.value = {};
     };
 
     /**
      * 删除
      */
     const del = (id: number) => {
-      axios.delete("http://localhost:10020/notes/note/" + id).then((resp) => {
+      axios.delete("http://localhost:10020/notes/category/" + id).then((resp) => {
         const response: any = resp.data;
         if (response.ok) {
           handleQuery({
@@ -215,7 +185,7 @@ export default defineComponent({
 
     return {
       param,
-      notes,
+      categories,
       pagination,
       columns,
       loading,
@@ -224,7 +194,7 @@ export default defineComponent({
       add,
       del,
 
-      note,
+      category,
       modalVisible,
       modalLoading,
       handleTableChange,

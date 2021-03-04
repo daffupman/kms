@@ -8,6 +8,9 @@
       <a-menu-item key="/note">
         <router-link to="/note">笔记管理</router-link>
       </a-menu-item>
+      <a-menu-item key="/category">
+        <router-link to="/category">分类管理</router-link>
+      </a-menu-item>
       <a-menu-item key="/about">
         <router-link to="/about">关于我们</router-link>
       </a-menu-item>
