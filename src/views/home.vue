@@ -1,52 +1,25 @@
 <template>
   <a-layout>
     <a-layout-sider width="200" style="background: #ffffff">
-      <a-menu
-          mode="inline"
-          v-model:selectedKeys="selectedKeys2"
-          v-model:openKeys="openKeys"
-          :style="{ height: '100%', borderRight: 0 }"
-      >
-        <a-sub-menu key="sub1">
-          <template #title>
-              <span>
-                <user-outlined/>
-                subnav 111
-              </span>
+      <a-menu mode="inline" :style="{ height: '100%', borderRight: 0 }" @click="handleClick">
+        <a-menu-item key="welcome">
+          <MailOutlined/><span>欢迎</span>
+        </a-menu-item>
+        <a-sub-menu v-for="c in rootLevel" :key="c.id">
+          <template v-slot:title>
+            <span><user-outlined />{{c.cateName}}</span>
           </template>
-          <a-menu-item key="1">option1</a-menu-item>
-          <a-menu-item key="2">option2</a-menu-item>
-          <a-menu-item key="3">option3</a-menu-item>
-          <a-menu-item key="4">option4</a-menu-item>
-        </a-sub-menu>
-        <a-sub-menu key="sub2">
-          <template #title>
-              <span>
-                <laptop-outlined/>
-                subnav 2
-              </span>
-          </template>
-          <a-menu-item key="5">option5</a-menu-item>
-          <a-menu-item key="6">option6</a-menu-item>
-          <a-menu-item key="7">option7</a-menu-item>
-          <a-menu-item key="8">option8</a-menu-item>
-        </a-sub-menu>
-        <a-sub-menu key="sub3">
-          <template #title>
-              <span>
-                <notification-outlined/>
-                subnav 3
-              </span>
-          </template>
-          <a-menu-item key="9">option9</a-menu-item>
-          <a-menu-item key="10">option10</a-menu-item>
-          <a-menu-item key="11">option11</a-menu-item>
-          <a-menu-item key="12">option12</a-menu-item>
+          <a-menu-item v-for="child in c.children" :key="child.id">
+            <MailOutlined /><span>{{child.cateName}}</span>
+          </a-menu-item>
         </a-sub-menu>
       </a-menu>
     </a-layout-sider>
     <a-layout-content :style="{ background: '#fff', padding: '24px', margin: 0, minHeight: '280px' }">
-      <a-list item-layout="vertical" size="large" :grid="{gutter: 20, column: 3}" :data-source="notes">
+      <div class="welcome" v-show="welcomeShowed">
+        <h1>欢迎使用知识管理平台</h1>
+      </div>
+      <a-list v-show="!welcomeShowed" item-layout="vertical" size="large" :grid="{gutter: 20, column: 3}" :data-source="notes">
         <template #renderItem="{ item }">
           <a-list-item key="item.name">
             <template #actions>
@@ -71,6 +44,8 @@
 <script lang="ts">
 import {defineComponent, onMounted, ref} from 'vue';
 import axios from 'axios';
+import {Tool} from '@/util/tool';
+import {message} from 'ant-design-vue';
 
 const listData: Record<string, string>[] = [];
 
@@ -93,13 +68,46 @@ export default defineComponent({
 
     const notes = ref();
 
-    // onMounted方法中可以编写初始化逻辑
-    onMounted(() => {
-      console.log(process.env.NOTES_SERVER);
-      axios.get("http://localhost:10020/notes/note?pageNum=1&pageSize=10").then((resp) => {
+    const rootLevel = ref();
+    let categories: any;
+
+    const handleQueryCategories = () => {
+      axios.get("http://localhost:10020/notes/category/all").then(resp => {
+        const response = resp.data;
+        if (response.ok) {
+          const data = response.data;
+          rootLevel.value = Tool.array2Tree(data, 0)
+        } else {
+          message.error(response.message);
+        }
+      })
+    }
+
+    const welcomeShowed = ref(true);
+    let currCategoryId = 0;
+
+    const handleQueryNotes = () => {
+      axios.get("http://localhost:10020/notes/note",
+          {params: {page: 1, size: 1000, categoryId: currCategoryId}}
+      ).then((resp) => {
         const response = resp.data;
         notes.value = response.data.list;
       });
+    }
+
+    const handleClick = (value: any) => {
+      if (value.key === 'welcome') {
+        welcomeShowed.value = true;
+      } else {
+        currCategoryId = value.key;
+        welcomeShowed.value = false;
+        handleQueryNotes()
+      }
+    };
+
+    // onMounted方法中可以编写初始化逻辑
+    onMounted(() => {
+      handleQueryCategories();
     });
 
     return {
@@ -115,7 +123,11 @@ export default defineComponent({
         { type: 'StarOutlined', text: '156' },
         { type: 'LikeOutlined', text: '156' },
         { type: 'MessageOutlined', text: '2' },
-      ]
+      ],
+
+      rootLevel,
+      handleClick,
+      welcomeShowed
     }
   }
 });

@@ -21,6 +21,9 @@
         <template #cover="{ text: cover }">
           <img v-if="cover" :src="cover" alt="avatar" />
         </template>
+        <template v-slot:category="{text, record}">
+          <span>{{getCategoryName(record.category1Id)}} / {{getCategoryName(record.category2Id)}}</span>
+        </template>
         <template v-slot:action="{ text, record }">
           <a-space size="small">
             <a-button type="primary" @click="edit(record)">
@@ -37,7 +40,7 @@
     </a-layout-content>
   </a-layout>
 
-  <a-modal title="编辑笔记基本信息" v-model:visible="modalVisible" :confirm-loading="modalLoading" @ok="handleModalOk">
+  <a-modal title="编辑笔记基本信息" v-model:visible="modalVisible" :confirm-loading="false" @ok="handleModalOk">
     <a-form :model="notes" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
       <a-form-item label="封面">
         <a-input v-model:value="notes.cover" />
@@ -45,11 +48,8 @@
       <a-form-item label="名称">
         <a-input v-model:value="notes.name" />
       </a-form-item>
-      <a-form-item label="分类一">
-        <a-input v-model:value="notes.category1Id" />
-      </a-form-item>
-      <a-form-item label="分类一">
-        <a-input v-model:value="notes.category2Id" />
+      <a-form-item label="分类">
+        <a-cascader v-model:value="categoryIds" :field-names="{label: 'cateName', value: 'id', children: 'children'}" :options="rootLevel"/>
       </a-form-item>
       <a-form-item label="描述">
         <a-input v-model:value="notes.description" type="textarea"/>
@@ -90,12 +90,8 @@ export default defineComponent({
         dataIndex: 'name'
       },
       {
-        title: '分类一',
-        dataIndex: 'category1Id'
-      },
-      {
-        title: '分类二',
-        dataIndex: 'category2Id'
+        title: '分类',
+        slots: { customRender: 'category'}
       },
       {
         title: '文档数',
@@ -157,9 +153,11 @@ export default defineComponent({
      */
     const modalVisible = ref(false);
     const modalLoading = ref(false);
+    const categoryIds = ref();
     const handleModalOk = () => {
       modalLoading.value = true;
-
+      notes.value.category1Id = categoryIds.value[0];
+      notes.value.category2Id = categoryIds.value[1];
       axios.put("http://localhost:10020/notes/note", notes.value).then((resp) => {
         const response: any = resp.data;
         if (response.ok) {
@@ -170,6 +168,8 @@ export default defineComponent({
             page: pagination.value.current,
             size: pagination.value.pageSize
           })
+        } else {
+          message.error(response.message);
         }
       });
     };
@@ -181,6 +181,7 @@ export default defineComponent({
       modalVisible.value = true;
       // 需要使用复制功能，否则在编辑的时候，会立马修改页面上的值，尽管还没有提交修改
       notes.value = Tool.copy(record);
+      categoryIds.value = [notes.value.category1Id, notes.value.category2Id];
     };
 
     /**
@@ -206,11 +207,40 @@ export default defineComponent({
       });
     };
 
+    const rootLevel = ref();
+    let categories: any;
+
+    const handleQueryCategories = () => {
+      loading.value = true;
+      axios.get("http://localhost:10020/notes/category/all").then(resp => {
+        loading.value = false;
+        const response = resp.data;
+        if (response.ok) {
+          const data = response.data;
+          categories = data;
+          rootLevel.value = Tool.array2Tree(data, 0)
+          handleQuery({
+            page: 1,
+            size: pagination.value.pageSize
+          });
+        } else {
+          message.error(response.message);
+        }
+      })
+    }
+
+    const getCategoryName = (cid: number) => {
+      let result = "";
+      categories.forEach((each: any) => {
+        if (each.id === cid) {
+          result = each.cateName;
+        }
+      })
+      return result;
+    }
+
     onMounted(() => {
-      handleQuery({
-        page: 1,
-        size: pagination.value.pageSize
-      });
+      handleQueryCategories();
     });
 
     return {
@@ -219,6 +249,8 @@ export default defineComponent({
       pagination,
       columns,
       loading,
+      categoryIds,
+      rootLevel,
 
       edit,
       add,
@@ -229,7 +261,8 @@ export default defineComponent({
       modalLoading,
       handleTableChange,
       handleModalOk,
-      handleQuery
+      handleQuery,
+      getCategoryName
     }
   }
 });

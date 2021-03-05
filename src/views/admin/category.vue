@@ -3,11 +3,7 @@
     <a-layout-content :style="{ background: '#fff', padding: '24px', margin: 0, minHeight: '280px' }">
       <a-form layout="inline" :model="param">
         <a-form-item>
-          <a-input v-model:value="param.name" placeholder="名称">
-          </a-input>
-        </a-form-item>
-        <a-form-item>
-          <a-button type="primary" @click="handleQuery({page: 1, size: pagination.pageSize})">
+          <a-button type="primary" @click="handleQuery()">
             查询
           </a-button>
         </a-form-item>
@@ -17,7 +13,7 @@
           </a-button>
         </a-form-item>
       </a-form>
-      <a-table :columns="columns" :row-key="record => record.id" :data-source="categories" :pagination="pagination" :loading="loading" @change="handleTableChange">
+      <a-table :columns="columns" :row-key="record => record.id" :data-source="rootLevel" :pagination="false" :loading="loading">
         <template #cover="{ text: cover }">
           <img v-if="cover" :src="cover" alt="avatar" />
         </template>
@@ -43,14 +39,17 @@
         <a-input v-model:value="categories.cateName" />
       </a-form-item>
       <a-form-item label="父分类id">
-        <a-input v-model:value="categories.parentId" />
+        <a-select v-model:value="categories.parentId" ref="select">
+          <a-select-option value="0">无</a-select-option>
+          <a-select-option v-for="c in rootLevel" :key="c.id" :value="c.id" :disabled="categories.id === c.id">{{c.cateName}}</a-select-option>
+        </a-select>
       </a-form-item>
     </a-form>
   </a-modal>
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, ref } from 'vue';
+import {defineComponent, onMounted, ref} from 'vue';
 import axios from 'axios';
 import {Tool} from '@/util/tool';
 import {message} from 'ant-design-vue';
@@ -63,11 +62,6 @@ export default defineComponent({
 
     const categories = ref();
     const category = ref();
-    const pagination = ref({
-      current: 1,
-      pageSize: 4,
-      total: 0
-    });
     const loading = ref(false);
 
     const columns = [
@@ -86,38 +80,22 @@ export default defineComponent({
       }
     ];
 
+    const rootLevel = ref();
+
     /**
      * 数据查询
      **/
-    const handleQuery = (params: any) => {
+    const handleQuery = () => {
       loading.value = true;
-      axios.get("http://localhost:10020/notes/category", {
-        params: {
-          cateName: param.value.name,
-          pageNum: params.page,
-          pageSize: params.size
-        }
-      }).then((resp) => {
+      axios.get("http://localhost:10020/notes/category/all").then((resp) => {
         loading.value = false;
         const response = resp.data;
         if (response.ok) {
-          categories.value = response.data.list;
-          // 重置分页按钮
-          pagination.value.current = params.page;
-          pagination.value.total = response.data.total;
+          categories.value = response.data;
+          rootLevel.value = Tool.array2Tree(response.data, 0);
         } else {
           message.error(response.msg);
         }
-      });
-    };
-
-    /**
-     * 表格点击页码时触发
-     */
-    const handleTableChange = (pagination: any) => {
-      handleQuery({
-        page: pagination.current,
-        size: pagination.pageSize
       });
     };
 
@@ -136,10 +114,7 @@ export default defineComponent({
           modalVisible.value = false;
           modalLoading.value = false;
 
-          handleQuery({
-            page: pagination.value.current,
-            size: pagination.value.pageSize
-          })
+          handleQuery();
         }
       });
     };
@@ -168,25 +143,19 @@ export default defineComponent({
       axios.delete("http://localhost:10020/notes/category/" + id).then((resp) => {
         const response: any = resp.data;
         if (response.ok) {
-          handleQuery({
-            page: pagination.value.current,
-            size: pagination.value.pageSize
-          })
+          handleQuery()
         }
       });
     };
 
     onMounted(() => {
-      handleQuery({
-        page: 1,
-        size: pagination.value.pageSize
-      });
+      handleQuery();
     });
 
     return {
+      rootLevel,
       param,
       categories,
-      pagination,
       columns,
       loading,
 
@@ -197,7 +166,6 @@ export default defineComponent({
       category,
       modalVisible,
       modalLoading,
-      handleTableChange,
       handleModalOk,
       handleQuery
     }
