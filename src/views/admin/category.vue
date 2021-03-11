@@ -38,8 +38,8 @@
       <a-form-item label="名称">
         <a-input v-model:value="categories.cateName" />
       </a-form-item>
-      <a-form-item label="父分类id">
-        <a-select v-model:value="categories.parentId" ref="select">
+      <a-form-item label="父分类">
+        <a-select v-model:value="categories.parentId">
           <a-select-option value="0">无</a-select-option>
           <a-select-option v-for="c in rootLevel" :key="c.id" :value="c.id" :disabled="categories.id === c.id">{{c.cateName}}</a-select-option>
         </a-select>
@@ -87,7 +87,7 @@ export default defineComponent({
      **/
     const handleQuery = () => {
       loading.value = true;
-      axios.get("http://localhost:10020/notes/category/all").then((resp) => {
+      axios.get("/notes/category/all").then((resp) => {
         loading.value = false;
         const response = resp.data;
         if (response.ok) {
@@ -108,11 +108,12 @@ export default defineComponent({
     const handleModalOk = () => {
       modalLoading.value = true;
 
-      axios.put("http://localhost:10020/notes/category", categories.value).then((resp) => {
+      axios.put("/notes/category", categories.value).then((resp) => {
         const response: any = resp.data;
         if (response.ok) {
           modalVisible.value = false;
           modalLoading.value = false;
+          console.log("modalLoading:" + modalLoading.value);
 
           handleQuery();
         }
@@ -140,7 +141,7 @@ export default defineComponent({
      * 删除
      */
     const del = (id: number) => {
-      axios.delete("http://localhost:10020/notes/category/" + id).then((resp) => {
+      axios.delete("/notes/category/" + id).then((resp) => {
         const response: any = resp.data;
         if (response.ok) {
           handleQuery()

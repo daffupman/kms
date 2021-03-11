@@ -10,7 +10,7 @@
             <span><user-outlined />{{c.cateName}}</span>
           </template>
           <a-menu-item v-for="child in c.children" :key="child.id">
-            <MailOutlined /><span>{{child.cateName}}</span>
+            <MailOutlined/><span>{{child.cateName}}</span>
           </a-menu-item>
         </a-sub-menu>
       </a-menu>
@@ -47,20 +47,6 @@ import axios from 'axios';
 import {Tool} from '@/util/tool';
 import {message} from 'ant-design-vue';
 
-const listData: Record<string, string>[] = [];
-
-for (let i = 0; i < 23; i++) {
-  listData.push({
-    href: 'https://www.antdv.com/',
-    title: `ant design vue part ${i}`,
-    avatar: 'https://zos.alipayobjects.com/rmsportal/ODTLcjxAfvqbxHnVXCYX.png',
-    description:
-        'Ant Design, a design language for background applications, is refined by Ant UED Team.',
-    content:
-        'We supply a series of design principles, practical patterns and high quality design resources (Sketch and Axure), to help people create their product prototypes beautifully and efficiently.',
-  });
-}
-
 export default defineComponent({
   name: 'home',
   // setup是vue3新增的，用于初始化的方法
@@ -72,7 +58,7 @@ export default defineComponent({
     let categories: any;
 
     const handleQueryCategories = () => {
-      axios.get("http://localhost:10020/notes/category/all").then(resp => {
+      axios.get("/notes/category/all").then(resp => {
         const response = resp.data;
         if (response.ok) {
           const data = response.data;
@@ -87,7 +73,7 @@ export default defineComponent({
     let currCategoryId = 0;
 
     const handleQueryNotes = () => {
-      axios.get("http://localhost:10020/notes/note",
+      axios.get("/notes/note",
           {params: {page: 1, size: 1000, categoryId: currCategoryId}}
       ).then((resp) => {
         const response = resp.data;
@@ -112,13 +98,6 @@ export default defineComponent({
 
     return {
       notes,
-      listData,
-      pagination: {
-        onChange: (page: any) => {
-          console.log(page);
-        },
-        pageSize: 3,
-      },
       actions: [
         { type: 'StarOutlined', text: '156' },
         { type: 'LikeOutlined', text: '156' },

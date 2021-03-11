@@ -26,6 +26,9 @@
         </template>
         <template v-slot:action="{ text, record }">
           <a-space size="small">
+            <router-link :to="'/doc?noteId=' + record.id">
+              <a-button type="primary">文档管理</a-button>
+            </router-link>
             <a-button type="primary" @click="edit(record)">
               编辑
             </a-button>
@@ -59,7 +62,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, ref } from 'vue';
+import {defineComponent, onMounted, ref} from 'vue';
 import axios from 'axios';
 import {Tool} from '@/util/tool';
 import {message} from 'ant-design-vue';
@@ -117,7 +120,7 @@ export default defineComponent({
      **/
     const handleQuery = (params: any) => {
       loading.value = true;
-      axios.get("http://localhost:10020/notes/note", {
+      axios.get("/notes/note", {
         params: {
           noteName: param.value.name,
           pageNum: params.page,
@@ -158,7 +161,7 @@ export default defineComponent({
       modalLoading.value = true;
       notes.value.category1Id = categoryIds.value[0];
       notes.value.category2Id = categoryIds.value[1];
-      axios.put("http://localhost:10020/notes/note", notes.value).then((resp) => {
+      axios.put("/notes/note", notes.value).then((resp) => {
         const response: any = resp.data;
         if (response.ok) {
           modalVisible.value = false;
@@ -196,7 +199,7 @@ export default defineComponent({
      * 删除
      */
     const del = (id: number) => {
-      axios.delete("http://localhost:10020/notes/note/" + id).then((resp) => {
+      axios.delete("/notes/note/" + id).then((resp) => {
         const response: any = resp.data;
         if (response.ok) {
           handleQuery({
@@ -212,7 +215,7 @@ export default defineComponent({
 
     const handleQueryCategories = () => {
       loading.value = true;
-      axios.get("http://localhost:10020/notes/category/all").then(resp => {
+      axios.get("/notes/category/all").then(resp => {
         loading.value = false;
         const response = resp.data;
         if (response.ok) {

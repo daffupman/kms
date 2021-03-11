@@ -7,7 +7,7 @@ import 'ant-design-vue/dist/antd.css'
 import * as Icons from '@ant-design/icons-vue';
 import axios from 'axios';
 
-// axios.defaults.baseURL = process.env.NOTES_SERVER;
+axios.defaults.baseURL = process.env.VUE_APP_NOTES_SERVER;
 
 /**
  * axios拦截器
