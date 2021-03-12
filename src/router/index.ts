@@ -3,6 +3,7 @@ import home from '../views/home.vue'
 import about from '../views/about.vue'
 import note from '../views/admin/note.vue'
 import doc from '../views/admin/doc.vue'
+import portalDoc from '../views/portal-doc.vue'
 import category from "@/views/admin/category.vue";
 
 const routes = [
@@ -25,6 +26,11 @@ const routes = [
     path: '/doc',
     name: 'Doc',
     component: doc
+  },
+  {
+    path: '/portal/doc',
+    name: 'PortalDoc',
+    component: portalDoc
   },
   {
     path: '/about',

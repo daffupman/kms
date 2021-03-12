@@ -17,7 +17,7 @@
               </a-form-item>
             </a-form>
           </p>
-          <a-table :columns="columns" :row-key="record => record.id" :data-source="rootLevel" :pagination="false"
+          <a-table v-if="rootLevel.length > 0" :columns="columns" :row-key="record => record.id" :data-source="rootLevel" :pagination="false"
                    :loading="loading" size="small" :defaultExpandAllRows="true">
             <template #name="{ text, record }">
               {{ text }}  {{ record.sort }}
@@ -58,11 +58,19 @@
               <a-input v-model:value="doc.sort" placeholder="顺序"/>
             </a-form-item>
             <a-form-item>
+              <a-button type="primary" @click="handlePreviewContent()">
+                <EyeOutlined /> 内容预览
+              </a-button>
+            </a-form-item>
+            <a-form-item>
               <div id="content"></div>
             </a-form-item>
           </a-form>
         </a-col>
       </a-row>
+      <a-drawer width="900" placement="right" :closable="false" :visible="drawerVisible" @close="onDrawerClose">
+        <div class="editor" :innerHTML="previewHtml"></div>
+      </a-drawer>
     </a-layout-content>
   </a-layout>
 
@@ -72,7 +80,7 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, onMounted, onBeforeMount, ref, createVNode} from 'vue';
+import {createVNode, defineComponent, onMounted, ref} from 'vue';
 import axios from 'axios';
 import {Tool} from '@/util/tool';
 import {message, Modal} from 'ant-design-vue';
@@ -88,7 +96,8 @@ export default defineComponent({
     param.value = {};
 
     const docs = ref();
-    const doc = ref({})
+    const doc = ref()
+    doc.value = {};
     const loading = ref(false);
 
     const columns = [
@@ -105,6 +114,14 @@ export default defineComponent({
     ];
 
     const rootLevel = ref();
+    rootLevel.value = [];
+
+    const treeSelectData = ref();
+    treeSelectData.value = [];
+    const modalVisible = ref(false);
+    const modalLoading = ref(false);
+    const editor = new Editor('#content');
+    editor.config.zIndex = 0;
 
     /**
      * 数据查询
@@ -113,38 +130,54 @@ export default defineComponent({
       loading.value = true;
       // 如果不清楚数据，在编辑保存后，重新加载列表数据，再进入编辑页面会显示之前的数据
       rootLevel.value = [];
-      axios.get("/notes/doc/all").then((resp) => {
+      axios.get("/notes/note/" + route.query.noteId + "/docs").then((resp) => {
         const response = resp.data;
         if (response.ok) {
           docs.value = response.data;
           rootLevel.value = Tool.array2Tree(response.data, 0);
+          const treeLevel = Tool.copy(rootLevel.value);
+          treeSelectData.value = treeLevel === undefined ? [] : treeLevel;
+          treeSelectData.value.unshift({id: 0, name: '无'});
         } else {
           message.error(response.msg);
         }
         loading.value = false;
       });
     };
+
+    /**
+     * 内容查询
+     **/
+    const handleQueryContent = () => {
+      const url = "/notes/doc/" + doc.value.id + "/content";
+      console.log("url:" + url);
+      axios.get(url).then((resp) => {
+        const response = resp.data;
+        editor.txt.html('');
+        if (response.ok) {
+          editor.txt.html(response.data);
+        } else {
+          message.error(response.msg);
+        }
+        loading.value = false;
+      });
+    };
+
     // -------- 表单 ---------
     // 由于树选择组件的属性状态，会随当时编辑的节点而变化，所以单独声明一个响应式变量
-    const treeSelectData = ref();
-    treeSelectData.value = [];
-    const modalVisible = ref(false);
-    const modalLoading = ref(false);
-    const editor = new Editor('#content');
-    editor.config.zIndex = 0;
-
     const handleSave = () => {
       modalLoading.value = true;
-
-      axios.put("/notes/doc", docs.value).then((resp) => {
+      doc.value.noteId = route.query.noteId;
+      doc.value.content = editor.txt.html();
+      axios.put("/notes/doc", doc.value).then((resp) => {
         const response: any = resp.data;
         if (response.ok) {
           modalVisible.value = false;
           modalLoading.value = false;
-
+          message.success(response.msg);
           handleQuery();
         } else {
-          message.success(response.msg);
+          message.error(response.msg);
         }
         modalLoading.value = false;
       });
@@ -224,6 +257,7 @@ export default defineComponent({
         noteId: route.query.noteId
       }
       doc.value = Tool.copy(record);
+      handleQueryContent();
       treeSelectData.value = Tool.copy(rootLevel.value);
       setDisable(treeSelectData.value, record.id);
       treeSelectData.value.unshift({id: 0, name: '无'});
@@ -237,7 +271,7 @@ export default defineComponent({
       doc.value = {
         noteId: route.query.noteId,
       };
-
+      editor.txt.html('');
       treeSelectData.value = Tool.copy(rootLevel.value);
       treeSelectData.value.unshift({id: 0, name: '无'});
     };
@@ -273,6 +307,17 @@ export default defineComponent({
       editor.create();
     });
 
+    // ----------------富文本预览--------------
+    const drawerVisible = ref(false);
+    const previewHtml = ref();
+    const handlePreviewContent = () => {
+      previewHtml.value = editor.txt.html();
+      drawerVisible.value = true;
+    };
+    const onDrawerClose = () => {
+      drawerVisible.value = false;
+    };
+
     return {
       rootLevel,
       param,
@@ -288,8 +333,13 @@ export default defineComponent({
       doc,
       modalVisible,
       modalLoading,
+      drawerVisible,
+      previewHtml,
+
       handleSave,
-      handleQuery
+      handleQuery,
+      handlePreviewContent,
+      onDrawerClose
     }
   }
 });
