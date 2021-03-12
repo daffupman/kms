@@ -34,14 +34,14 @@
   </a-layout>
 
   <a-modal title="编辑分类基本信息" v-model:visible="modalVisible" :confirm-loading="modalLoading" @ok="handleModalOk">
-    <a-form :model="categories" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
+    <a-form :model="category" :label-col="{ span: 6 }" :wrapper-col="{ span: 18 }">
       <a-form-item label="名称">
-        <a-input v-model:value="categories.cateName" />
+        <a-input v-model:value="category.cateName" />
       </a-form-item>
       <a-form-item label="父分类">
-        <a-select v-model:value="categories.parentId">
+        <a-select v-model:value="category.parentId">
           <a-select-option value="0">无</a-select-option>
-          <a-select-option v-for="c in rootLevel" :key="c.id" :value="c.id" :disabled="categories.id === c.id">{{c.cateName}}</a-select-option>
+          <a-select-option v-for="c in rootLevel" :key="c.id" :value="c.id" :disabled="category.id === c.id">{{c.cateName}}</a-select-option>
         </a-select>
       </a-form-item>
     </a-form>
@@ -113,7 +113,6 @@ export default defineComponent({
         if (response.ok) {
           modalVisible.value = false;
           modalLoading.value = false;
-          console.log("modalLoading:" + modalLoading.value);
 
           handleQuery();
         }
@@ -126,7 +125,10 @@ export default defineComponent({
     const edit = (record: any) => {
       modalVisible.value = true;
       // 需要使用复制功能，否则在编辑的时候，会立马修改页面上的值，尽管还没有提交修改
-      categories.value = Tool.copy(record);
+      category.value = Tool.copy(record);
+      if (category.value.parentId === 0) {
+        category.value.parentId = '无';
+      }
     };
 
     /**
