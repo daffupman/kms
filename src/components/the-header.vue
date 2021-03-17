@@ -5,6 +5,9 @@
       <a-menu-item key="/">
         <router-link to="/">首页</router-link>
       </a-menu-item>
+      <a-menu-item key="/user">
+        <router-link to="/user">用户管理</router-link>
+      </a-menu-item>
       <a-menu-item key="/note">
         <router-link to="/note">笔记管理</router-link>
       </a-menu-item>

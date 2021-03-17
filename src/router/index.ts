@@ -5,6 +5,7 @@ import note from '../views/admin/note.vue'
 import doc from '../views/admin/doc.vue'
 import portalDoc from '../views/portal-doc.vue'
 import category from "@/views/admin/category.vue";
+import user from "@/views/admin/user.vue";
 
 const routes = [
   {
@@ -26,6 +27,11 @@ const routes = [
     path: '/doc',
     name: 'Doc',
     component: doc
+  },
+  {
+    path: '/user',
+    name: 'User',
+    component: user
   },
   {
     path: '/portal/doc',
