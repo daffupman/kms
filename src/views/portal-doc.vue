@@ -8,8 +8,20 @@
                   :defaultExpandAll="true" :defaultSelectedKeys="defaultSelectedKeys">
           </a-tree>
         </a-col>
-        <a-col :span="18">
+        <a-col :span="18" v-if="rootLevel.length > 0">
+          <div>
+            <h2>{{doc.name}}</h2>
+            <div>
+              <span>阅读数：{{doc.viewCount}}</span>
+            </div>
+            <a-divider style="height: 2px; background-color: #9999cc"/>
+          </div>
           <div class="editor" :innerHTML="html"></div>
+          <div class="vote-div">
+            <a-button type="primary" shape="round" size="large" @click="vote">
+              <template #icon><LikeOutlined/>&nbsp;{{doc.voteCount}}&nbsp;次点赞&nbsp;</template>
+            </a-button>
+          </div>
         </a-col>
       </a-row>
     </a-layout-content>
@@ -30,6 +42,9 @@ export default defineComponent({
     const route = useRoute();
     const defaultSelectedKeys = ref();
     defaultSelectedKeys.value = [];
+    // 当前选中的文档
+    const doc = ref();
+    doc.value = {};
 
     /**
      * 一级文档树，children属性就是二级文档
@@ -63,6 +78,7 @@ export default defineComponent({
 
     const onSelect = (selectedKeys: any, info: any) => {
       if (Tool.isNotEmpty(selectedKeys)) {
+        doc.value = info.selectedNodes[0].props;
         handleQueryContent(selectedKeys[0]);
       }
     };
@@ -77,16 +93,28 @@ export default defineComponent({
           docs.value = response.data;
           rootLevel.value = [];
           rootLevel.value = Tool.array2Tree(docs.value, 0);
-          if (Tool.isNotEmpty(rootLevel)) {
+          if (Tool.isNotEmpty(rootLevel.value)) {
             defaultSelectedKeys.value = [rootLevel.value[0].id];
-            console.log(rootLevel.value[0].id);
             handleQueryContent(rootLevel.value[0].id);
+            doc.value = rootLevel.value[0];
           }
         } else {
           message.error(response.msg);
         }
       });
     };
+
+    const vote = () => {
+      axios.get('/notes/doc/' + doc.value.id + '/voting').then(resp => {
+        const response = resp.data;
+        if (response.ok) {
+          doc.value.voteCount ++;
+          message.success("点赞成功！");
+        } else {
+          message.error(response.msg);
+        }
+      })
+    }
 
     onMounted(() => {
       handleQuery();
@@ -95,8 +123,10 @@ export default defineComponent({
     return {
       rootLevel,
       html,
+      doc,
 
-      onSelect
+      onSelect,
+      vote
     }
   }
 });
@@ -156,5 +186,10 @@ export default defineComponent({
   margin: 20px 10px !important;
   font-size: 16px !important;
   font-weight:600;
+}
+
+.vote-div {
+  padding: 15px;
+  text-align: center;
 }
 </style>

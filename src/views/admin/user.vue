@@ -34,7 +34,7 @@
       <a-form-item label="登陆名">
         <a-input v-model:value="user.loginName" :disabled="!!user.id"/>
       </a-form-item>
-      <a-form-item label="昵称">
+      <a-form-item label="用戶名">
         <a-input v-model:value="user.name" />
       </a-form-item>
       <a-form-item label="密码" v-show="!user.id">
@@ -152,7 +152,8 @@ export default defineComponent({
       user.value.password = hexMd5(user.value.password + KEY);
       axios.put("/notes/user", user.value).then((resp) => {
         modalLoading.value = false;
-        const response = resp.data; // data = commonResp
+        user.value = {};
+        const response = resp.data;
         if (response.ok) {
           modalVisible.value = false;
 
