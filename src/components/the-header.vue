@@ -5,18 +5,23 @@
       <a-menu-item key="/">
         <router-link to="/">首页</router-link>
       </a-menu-item>
-      <a-menu-item key="/user">
+      <a-menu-item key="/user" :style="user.id ? {} : {display:'none'}">
         <router-link to="/user">用户管理</router-link>
       </a-menu-item>
-      <a-menu-item key="/note">
+      <a-menu-item key="/note" :style="user.id ? {} : {display:'none'}">
         <router-link to="/note">笔记管理</router-link>
       </a-menu-item>
-      <a-menu-item key="/category">
+      <a-menu-item key="/category" :style="user.id ? {} : {display:'none'}">
         <router-link to="/category">分类管理</router-link>
       </a-menu-item>
       <a-menu-item key="/about">
         <router-link to="/about">关于我们</router-link>
       </a-menu-item>
+      <a-popconfirm title="确认退出登录？" ok-text="是" cancel-text="否" @confirm="logout">
+        <a class="login-menu" v-show="user.id">
+          <span>退出登录</span>
+        </a>
+      </a-popconfirm>
       <a class="login-menu" v-show="user.id" @click="showLoginModal">
         <span>欢迎登录，{{user.name}}</span>
       </a>
@@ -54,8 +59,8 @@ export default defineComponent({
 
     // 用来登录
     const loginUser = ref({
-      loginName: "test",
-      password: "test"
+      loginName: "daff",
+      password: "daff12345"
     });
     const loginModalVisible = ref(false);
     const loginModalLoading = ref(false);
@@ -84,13 +89,14 @@ export default defineComponent({
     // 退出登录
     const logout = () => {
       console.log("退出登录开始");
-      axios.get('/user/logout/' + user.value.token).then((response) => {
-        const data = response.data;
-        if (data.success) {
+      axios.post('/notes/user/logout', user.value).then((resp) => {
+        const response = resp.data;
+        if (response.ok) {
           message.success("退出登录成功！");
           store.commit("setUser", {});
+          location.reload();
         } else {
-          message.error(data.message);
+          message.error(response.msg);
         }
       });
     };

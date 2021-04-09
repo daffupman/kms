@@ -74,7 +74,7 @@ export default defineComponent({
           const data = response.data;
           rootLevel.value = Tool.array2Tree(data, 0)
         } else {
-          message.error(response.message);
+          message.error(response.msg);
         }
       })
     }

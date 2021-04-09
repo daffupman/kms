@@ -227,7 +227,7 @@ export default defineComponent({
             size: pagination.value.pageSize
           });
         } else {
-          message.error(response.message);
+          message.error(response.msg);
         }
       })
     }
