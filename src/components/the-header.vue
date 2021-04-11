@@ -70,7 +70,6 @@ export default defineComponent({
 
     // 登录
     const login = () => {
-      console.log("开始登录");
       loginModalLoading.value = true;
       loginUser.value.password = hexMd5(loginUser.value.password + KEY);
       axios.post('/notes/user/login', loginUser.value).then((resp) => {
@@ -80,6 +79,7 @@ export default defineComponent({
           loginModalVisible.value = false;
           message.success("登录成功！");
           store.commit("setUser", response.data);
+          location.reload();
         } else {
           message.error(response.msg);
         }
@@ -88,7 +88,6 @@ export default defineComponent({
 
     // 退出登录
     const logout = () => {
-      console.log("退出登录开始");
       axios.post('/notes/user/logout', user.value).then((resp) => {
         const response = resp.data;
         if (response.ok) {

@@ -3,14 +3,16 @@
     <a-layout-sider width="200" style="background: #ffffff">
       <a-menu mode="inline" :style="{ height: '100%', borderRight: 0 }" @click="handleClick">
         <a-menu-item key="welcome">
-          <MailOutlined/><span>欢迎</span>
+          <MailOutlined/>
+          <span>欢迎</span>
         </a-menu-item>
-        <a-sub-menu v-for="c in rootLevel" :key="c.id">
+        <a-sub-menu v-for="c in rootLevel" :key="c.id" v-show="user.id">
           <template v-slot:title>
-            <span><user-outlined />{{c.cateName}}</span>
+            <span><user-outlined/>{{ c.cateName }}</span>
           </template>
           <a-menu-item v-for="child in c.children" :key="child.id">
-            <MailOutlined/><span>{{child.cateName}}</span>
+            <MailOutlined/>
+            <span>{{ child.cateName }}</span>
           </a-menu-item>
         </a-sub-menu>
       </a-menu>
@@ -19,20 +21,21 @@
       <div class="welcome" v-show="welcomeShowed">
         <h1>欢迎使用知识管理平台</h1>
       </div>
-      <a-list v-show="!welcomeShowed" item-layout="vertical" size="large" :grid="{gutter: 20, column: 3}" :data-source="notes">
+      <a-list v-if="!welcomeShowed" item-layout="vertical" size="large" :grid="{gutter: 20, column: 3}"
+              :data-source="notes">
         <template #renderItem="{ item }">
           <a-list-item key="item.name">
             <template #actions>
               <span>
-                <component v-bind:is="'FileOutlined'" style="margin-right: 8px" />
+                <component v-bind:is="'FileOutlined'" style="margin-right: 8px"/>
                 {{ item.docCount }}
               </span>
               <span>
-                <component v-bind:is="'UserOutlined'" style="margin-right: 8px" />
+                <component v-bind:is="'UserOutlined'" style="margin-right: 8px"/>
                 {{ item.viewCount }}
               </span>
               <span>
-                <component v-bind:is="'LikeOutlined'" style="margin-right: 8px" />
+                <component v-bind:is="'LikeOutlined'" style="margin-right: 8px"/>
                 {{ item.voteCount }}
               </span>
             </template>
@@ -42,7 +45,9 @@
                   {{ item.name }}
                 </router-link>
               </template>
-              <template #avatar><a-avatar :src="item.cover" /></template>
+              <template #avatar>
+                <a-avatar :src="item.cover"/>
+              </template>
             </a-list-item-meta>
           </a-list-item>
         </template>
@@ -52,10 +57,11 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, onMounted, ref} from 'vue';
+import {computed, defineComponent, onMounted, ref} from 'vue';
 import axios from 'axios';
 import {Tool} from '@/util/tool';
 import {message} from 'ant-design-vue';
+import store from "@/store";
 
 export default defineComponent({
   name: 'home',
@@ -63,20 +69,21 @@ export default defineComponent({
   setup() {
 
     const notes = ref();
-
     const rootLevel = ref();
-    let categories: any;
+    const user = computed(() => store.state.user);
 
     const handleQueryCategories = () => {
-      axios.get("/notes/category/all").then(resp => {
-        const response = resp.data;
-        if (response.ok) {
-          const data = response.data;
-          rootLevel.value = Tool.array2Tree(data, 0)
-        } else {
-          message.error(response.msg);
-        }
-      })
+      if (user.value.id) {
+        axios.get("/notes/category/all").then(resp => {
+          const response = resp.data;
+          if (response.ok) {
+            const data = response.data;
+            rootLevel.value = Tool.array2Tree(data, 0)
+          } else {
+            message.error(response.msg);
+          }
+        })
+      }
     }
 
     const welcomeShowed = ref(true);
@@ -87,7 +94,11 @@ export default defineComponent({
           {params: {page: 1, size: 1000, categoryId: currCategoryId}}
       ).then((resp) => {
         const response = resp.data;
-        notes.value = response.data.list;
+        if (response.ok) {
+          notes.value = response.data.list;
+        } else {
+          message.error(response.msg)
+        }
       });
     }
 
@@ -109,14 +120,15 @@ export default defineComponent({
     return {
       notes,
       actions: [
-        { type: 'StarOutlined', text: '156' },
-        { type: 'LikeOutlined', text: '156' },
-        { type: 'MessageOutlined', text: '2' },
+        {type: 'StarOutlined', text: '156'},
+        {type: 'LikeOutlined', text: '156'},
+        {type: 'MessageOutlined', text: '2'},
       ],
-
       rootLevel,
-      handleClick,
-      welcomeShowed
+      welcomeShowed,
+      user,
+
+      handleClick
     }
   }
 });
