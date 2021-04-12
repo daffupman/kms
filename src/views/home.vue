@@ -19,7 +19,7 @@
     </a-layout-sider>
     <a-layout-content :style="{ background: '#fff', padding: '24px', margin: 0, minHeight: '280px' }">
       <div class="welcome" v-show="welcomeShowed">
-        <h1>欢迎使用知识管理平台</h1>
+        <the-welcome/>
       </div>
       <a-list v-if="!welcomeShowed" item-layout="vertical" size="large" :grid="{gutter: 20, column: 3}"
               :data-source="notes">
@@ -62,9 +62,13 @@ import axios from 'axios';
 import {Tool} from '@/util/tool';
 import {message} from 'ant-design-vue';
 import store from "@/store";
+import TheWelcome from "@/components/the-welcome.vue";
 
 export default defineComponent({
   name: 'home',
+  components: {
+    TheWelcome
+  },
   // setup是vue3新增的，用于初始化的方法
   setup() {
 
@@ -76,6 +80,7 @@ export default defineComponent({
       if (user.value.id) {
         axios.get("/notes/category/all").then(resp => {
           const response = resp.data;
+          console.log(response)
           if (response.ok) {
             const data = response.data;
             rootLevel.value = Tool.array2Tree(data, 0)

@@ -23,9 +23,17 @@ axios.interceptors.request.use(function (config) {
 }, error => {
     return Promise.reject(error);
 });
-axios.interceptors.response.use(function (response) {
-    console.log('返回结果：', response);
-    return response;
+axios.interceptors.response.use(resp => {
+    console.log('返回结果：', resp);
+    const response = resp.data;
+    if (!response.ok && response.code === 4000) {
+        // 没有认证，那么就跳转到首页
+        router.replace({path: '/'}).then(() => {
+            store.commit('setUser', {})
+            console.log("用户未登录")
+        });
+    }
+    return resp;
 }, error => {
     console.log('返回错误：', error);
     return Promise.reject(error);
